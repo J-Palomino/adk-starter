@@ -33,8 +33,10 @@ jobs:
         run: |
           # Clean up branch name for use in tags (lowercase, replace special chars)
           BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-' | tr '.' '-' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9.-]//g')
+          REPO_OWNER=$(echo "${{ secrets.GHCR_USERNAME || github.actor }}" | tr '[:upper:]' '[:lower:]')
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          echo "IMAGE_PREFIX=ghcr.io/${{ secrets.GHCR_USERNAME || github.actor }}/adk-starter" >> $GITHUB_ENV
+          echo "REPO_OWNER=$REPO_OWNER" >> $GITHUB_ENV
+          echo "IMAGE_PREFIX=ghcr.io/$REPO_OWNER/adk-starter" >> $GITHUB_ENV
           echo "IMAGE_TAG=$BRANCH_NAME" >> $GITHUB_ENV
           
           # Also set tag for default branch as 'latest'
