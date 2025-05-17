@@ -9,7 +9,7 @@ agent_name = "openrouter_agent"
 agent_instruction = f"You are a helpful assistant powered by {model}"
 agent_description = "Agent to answer questions about the recipes for catering orders."
 
-def get_current_time(city: str) -> dict:
+def get_current_time() -> dict:
    
     now = datetime.datetime.now()
     report = (
