@@ -20,9 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories and set permissions
-RUN mkdir -p /app/agents && \
+RUN useradd -m appuser && \
+    mkdir -p /app/agents && \
     chown -R appuser:appuser /app && \
-    useradd -m appuser && \
     chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
