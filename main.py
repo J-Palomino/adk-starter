@@ -1,13 +1,14 @@
-from fastapi import FastAPI, HTTPException
+import os
+import re
+import shutil
 from pathlib import Path
 from typing import List
-import shutil
-import re
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
 AGENT_TEMPLATES_DIR = Path(__file__).parent.resolve()
-OPENROUTER_STARTER_DIR = AGENT_TEMPLATES_DIR / "openrouter-starter"
+OPENROUTER_STARTER_DIR = AGENT_TEMPLATES_DIR / "agents"
 
 @app.get("/")
 def read_root():
@@ -19,16 +20,59 @@ def list_templates():
     return files
 
 @app.post("/new_agent/{agent_name}")
-def new_agent(agent_name: str, model: str, instruction: str, description: str):
+async def new_agent(agent_name: str, model: str, instruction: str, description: str):
+    # Validate agent name
+    if not re.match(r'^[a-zA-Z0-9_-]+$', agent_name):
+        raise HTTPException(status_code=400, detail="Invalid agent name. Use only letters, numbers, underscores, or hyphens.")
+    
     new_agent_dir = AGENT_TEMPLATES_DIR / agent_name
-    if new_agent_dir.exists():
-        raise HTTPException(status_code=400, detail="Agent directory already exists")
+    
+    # Debug: Check directory permissions
     try:
-        shutil.copytree(OPENROUTER_STARTER_DIR, new_agent_dir)
+        if not os.access(AGENT_TEMPLATES_DIR, os.W_OK):
+            raise HTTPException(
+                status_code=500,
+                detail=f"No write permission in directory: {AGENT_TEMPLATES_DIR}"
+            )
+            
+        if new_agent_dir.exists():
+            raise HTTPException(status_code=400, detail=f"Agent directory '{agent_name}' already exists")
+            
+        # Create the new agent directory
+        os.makedirs(new_agent_dir, exist_ok=True)
+        
+        # Ensure the directory is writable
+        if not os.access(new_agent_dir, os.W_OK):
+            raise HTTPException(
+                status_code=500,
+                detail=f"Cannot write to directory: {new_agent_dir}"
+            )
+            
+        # Copy template files
+        shutil.copytree(OPENROUTER_STARTER_DIR, new_agent_dir, dirs_exist_ok=True)
+        
+        # Update agent configuration
         update_agent_py(new_agent_dir, "openrouter", model, agent_name, instruction, description)
+        
+        return {"status": "created", "agent_dir": str(new_agent_dir)}
+        
+    except HTTPException:
+        raise
+    except FileExistsError:
+        raise HTTPException(status_code=400, detail=f"Agent directory '{agent_name}' already exists")
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Permission denied when creating agent: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create agent: {str(e)}")
-    return {"status": "created", "agent_dir": str(new_agent_dir)}
+        # Clean up partially created directory if something went wrong
+        if new_agent_dir.exists():
+            shutil.rmtree(new_agent_dir, ignore_errors=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create agent: {str(e)}"
+        )
 
 
 def update_agent_py(agent_dir, provider, model, agent_name, agent_instruction, agent_description):

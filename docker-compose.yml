@@ -7,7 +7,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - .:/app
+      - files_agents:/app/agents
+      - .:/app:ro
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
@@ -15,14 +16,17 @@ services:
   agent-api:
     build:
       context: .
-      dockerfile: agents.Dockerfile
+      dockerfile: agents/agents.Dockerfile
     command: adk web
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - files_agents:/app/agents:ro
+      - .:/app:ro
     environment:
       - PYTHONUNBUFFERED=1
     env_file  :
       - .env
 
+volumes:
+  files_agents:
