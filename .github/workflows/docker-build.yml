@@ -1,9 +1,12 @@
-name: Build Docker image on push
+# NOTE: This workflow is deprecated. Please use docker-build-modular.yml or docker-build-unified.yml
+name: "DEPRECATED - Build Docker image on push"
 
 on:
   push:
     branches:
       - '**'
+    paths:
+      - '.github/workflows/docker-build.yml'
 
 jobs:
   build:
@@ -13,6 +16,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Log deprecation notice
+        run: |
+          echo "::warning::This workflow is deprecated. Please use docker-build-modular.yml or docker-build-unified.yml"
+          echo "See the README for more information on the new workflow options."
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -20,19 +28,24 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ secrets.GHCR_USERNAME }}
-          password: ${{ secrets.CR_PAT }}
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.CR_PAT || github.token }}
 
       - name: Build and tag Docker image with branch name
         env:
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.actor }}
           BRANCH: ${{ github.ref_name }}
         run: |
           docker build -t ghcr.io/${GHCR_USERNAME}/adk-starter:${BRANCH} .
 
       - name: Push Docker image
         env:
-          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME || github.actor }}
           BRANCH: ${{ github.ref_name }}
         run: |
           docker push ghcr.io/${GHCR_USERNAME}/adk-starter:${BRANCH}
+
+      - name: Post-deprecation notice
+        run: |
+          echo "::warning::This workflow is deprecated. Please use docker-build-modular.yml or docker-build-unified.yml"
+          echo "See the README for more information on the new workflow options."

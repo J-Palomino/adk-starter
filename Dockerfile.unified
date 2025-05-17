@@ -1,0 +1,35 @@
+# Use the same base as your service
+FROM python:3.11-slim
+
+# Install supervisord and other dependencies
+RUN apt-get update && apt-get install -y supervisor && \
+    mkdir -p /var/log/supervisor && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy supervisord config
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Set up working directory
+WORKDIR /app
+
+# Copy requirements first for better layer caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories and set permissions
+RUN mkdir -p /app/agents && \
+    chown -R appuser:appuser /app && \
+    useradd -m appuser && \
+    chmod +x /app/entrypoint.sh
+
+# Switch to non-root user
+USER appuser
+
+# Expose both ports
+EXPOSE 8000 8080
+
+# Start supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

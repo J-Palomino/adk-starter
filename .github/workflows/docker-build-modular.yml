@@ -1,0 +1,73 @@
+name: Build and Push Modular Docker Images
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - '**'
+      - '!docker-compose.prod.yml'
+      - '!Dockerfile.unified'
+      - '!supervisord.conf'
+      - '!entrypoint.sh'
+
+jobs:
+  build-and-push-modular:
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.CR_PAT || github.token }}
+
+      - name: Set up environment
+        id: env
+        run: |
+          # Clean up branch name for use in tags
+          BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-')
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "IMAGE_PREFIX=ghcr.io/${{ secrets.GHCR_USERNAME || github.actor }}/adk-starter" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Build and push service-api
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./service.Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/service-api:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_PREFIX }}/service-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Build and push agent-api
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./agents/agents.Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/agent-api:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_PREFIX }}/agent-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Output image information
+        run: |
+          echo "Successfully built and pushed:"
+          echo "- ${{ env.IMAGE_PREFIX }}/service-api:${{ env.IMAGE_TAG }}"
+          echo "- ${{ env.IMAGE_PREFIX }}/agent-api:${{ env.IMAGE_TAG }}"

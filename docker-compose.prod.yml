@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  adk-starter:
+    image: ghcr.io/your-username/adk-starter-unified:main  # Update with your image reference
+    ports:
+      - "8080:8080"  # service-api
+      - "8000:8000"  # agent-api
+    volumes:
+      - files_agents:/app/agents
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env  # Make sure to provide all required environment variables
+    restart: unless-stopped
+
+volumes:
+  files_agents:
