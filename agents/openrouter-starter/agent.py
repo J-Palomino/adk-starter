@@ -13,7 +13,7 @@ def get_current_time() -> dict:
    
     now = datetime.datetime.now()
     report = (
-        f'The current time in Phoenix: {now.strftime("%Y-%m-%d %H:%M:%S %Z%z")}'
+        f' The current time in Phoenix: {now.strftime("%Y-%m-%d %H:%M:%S %Z%z")}'
     )
     return {"status": "success", "report": report}
 
