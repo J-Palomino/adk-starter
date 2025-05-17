@@ -6,8 +6,6 @@ def get_weather(city: str) -> dict:
     """Retrieves the current weather report for a specified city.
 
     Args:
-
-
         city (str): The name of the city for which to retrieve the weather report.
 
     Returns:
