@@ -10,6 +10,8 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
   agent-api:
     build:
       context: .
@@ -21,3 +23,6 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    env_file  :
+      - .env
+
