@@ -13,20 +13,51 @@ services:
       - PYTHONUNBUFFERED=1
     env_file:
       - .env
+    depends_on:
+      - init-agents
   agent-api:
     build:
       context: .
       dockerfile: agents/agents.Dockerfile
-    command: adk web
+    working_dir: /app
+    command: bash -c "cd agents && adk web"
     ports:
       - "8000:8000"
     volumes:
-      - files_agents:/app/agents:ro
+      - ./agents:/app/agents
       - .:/app:ro
     environment:
       - PYTHONUNBUFFERED=1
-    env_file  :
+      - ADK_AGENT_DIR=agents
+    env_file:
       - .env
+    depends_on:
+      - init-agents
+  init-agents:
+    image: alpine:3.18
+    command: >
+      sh -c '
+        echo "Initializing agents volume..." &&
+        # Copy new agents, overwriting existing ones
+        if [ -d "/agents_src/agents" ]; then
+          mkdir -p /app/agents &&
+          # First remove only the agent directories that exist in the source
+          for dir in /agents_src/agents/*/; do
+            if [ -d "$$dir" ]; then
+              dirname="$$(basename "$$dir")"
+              rm -rf "/app/agents/$$dirname"
+            fi
+          done &&
+          # Then copy all agent directories
+          cp -r /agents_src/agents/* /app/agents/ 2>/dev/null || :
+          echo "Agents synced successfully"
+        else
+          echo "No agents directory found to sync"
+        fi
+      '
+    volumes:
+      - .:/agents_src:ro
+      - files_agents:/app/agents
 
 volumes:
   files_agents:

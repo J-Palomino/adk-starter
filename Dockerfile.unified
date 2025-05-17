@@ -9,10 +9,8 @@ RUN apt-get update && \
 # Create app user with specific UID for Railway compatibility
 RUN useradd -m -u 1001 appuser
 
-# Create necessary directories with correct ownership
-RUN mkdir -p /app/agents /tmp/supervisor /var/run/supervisor && \
-    chown -R appuser:appuser /app /tmp/supervisor /var/run/supervisor && \
-    chmod 755 /tmp/supervisor /var/run/supervisor
+# Create necessary directories
+RUN mkdir -p /app/agents /tmp/supervisor /var/run/supervisor
 
 # Set up working directory
 WORKDIR /app
@@ -21,26 +19,27 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install httpx for the combined API
+RUN pip install httpx
+
 # Copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN chown -R appuser:appuser /etc/supervisor/conf.d/
 
-# Copy application code
+# Copy the combined API file
+COPY --chown=appuser:appuser combined_api.py .
+
+# Copy the rest of the application code
 COPY --chown=appuser:appuser . .
 
-# Set permissions
-RUN chmod +x /app/entrypoint.sh && \
-    chmod +x /app/agents/*/agent.py && \
-    chown -R appuser:appuser /app
-
-# Create a volume for persistent data
-VOLUME /app/agents
+# Make entrypoint.sh executable
+RUN chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
 USER appuser
 
-# Expose both ports
-EXPOSE 8000 8080
+# Expose the main port
+EXPOSE 8000
 
-# Start supervisord with the correct config
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start the application using the entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

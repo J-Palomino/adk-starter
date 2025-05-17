@@ -16,8 +16,12 @@ def read_root():
 
 @app.get("/agent_templates", response_model=List[str])
 def list_templates():
-    files = [f.name for f in AGENT_TEMPLATES_DIR.glob("*.py") if f.is_file() and f.name != "main.py"]
-    return files
+    # List all agent template directories in the agents directory
+    agents_dir = AGENT_TEMPLATES_DIR / "agents"
+    if not agents_dir.exists():
+        return []
+    templates = [f.name for f in agents_dir.iterdir() if f.is_dir() and not f.name.startswith('__')]
+    return templates
 
 @app.post("/new_agent/{agent_name}")
 async def new_agent(agent_name: str, model: str, instruction: str, description: str):
