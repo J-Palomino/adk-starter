@@ -31,11 +31,18 @@ jobs:
       - name: Set up environment
         id: env
         run: |
-          # Clean up branch name for use in tags
-          BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-')
+          # Clean up branch name for use in tags (lowercase, replace special chars)
+          BRANCH_NAME=$(echo ${{ github.ref_name }} | tr '/' '-' | tr '.' '-' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9.-]//g')
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "IMAGE_PREFIX=ghcr.io/${{ secrets.GHCR_USERNAME || github.actor }}/adk-starter" >> $GITHUB_ENV
           echo "IMAGE_TAG=$BRANCH_NAME" >> $GITHUB_ENV
+          
+          # Also set tag for default branch as 'latest'
+          if [ "${{ github.ref_name }}" = "${{ github.event.repository.default_branch }}" ]; then
+            echo "IS_DEFAULT_BRANCH=true" >> $GITHUB_ENV
+          else
+            echo "IS_DEFAULT_BRANCH=false" >> $GITHUB_ENV
+          fi
 
       - name: Build and push service-api
         uses: docker/build-push-action@v5
@@ -45,7 +52,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/service-api:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_PREFIX }}/service-api:latest
+            ${{ env.IMAGE_PREFIX }}/service-api:latest,enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -59,7 +66,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/agent-api:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_PREFIX }}/agent-api:latest
+            ${{ env.IMAGE_PREFIX }}/agent-api:latest,enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
