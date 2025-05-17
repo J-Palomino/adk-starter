@@ -13,7 +13,6 @@ on:
 jobs:
   build-and-push-unified:
     runs-on: ubuntu-latest
-    environment: prod
     
     steps:
       - name: Checkout code

@@ -13,7 +13,6 @@ on:
 jobs:
   build-and-push-modular:
     runs-on: ubuntu-latest
-    environment: dev
     
     steps:
       - name: Checkout code
