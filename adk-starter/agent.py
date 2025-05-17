@@ -7,11 +7,11 @@ def get_weather(city: str) -> dict:
 
     Args:
 
-    
+
         city (str): The name of the city for which to retrieve the weather report.
 
     Returns:
-        dict: status and result or error msg.
+        dict: status  and result or error msg.
     """
     if city.lower() == "new york":
         return {
