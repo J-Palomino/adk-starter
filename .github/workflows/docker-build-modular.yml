@@ -54,7 +54,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/service-api:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_PREFIX }}/service-api:latest,enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
+            ${{ env.IMAGE_PREFIX }}/service-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -68,7 +68,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/agent-api:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_PREFIX }}/agent-api:latest,enable=${{ env.IS_DEFAULT_BRANCH == 'true' }}
+            ${{ env.IMAGE_PREFIX }}/agent-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
