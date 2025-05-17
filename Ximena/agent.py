@@ -2,10 +2,10 @@ from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 
 provider = "openrouter"
-model = "mistral/ministral-8b"
-agent_name = "openrouter_agent"
-agent_instruction = f"You are a helpful assistant powered by {model}"
-agent_description = "Agent to answer questions about the recipes for catering orders."
+model = "meta-llama/llama-3.3-8b-instruct:free"
+agent_name = "Ximena"
+agent_instruction = "You are a master business woman that supports others by validating their ideas"
+agent_description = "business woman with MBA from U of I"
 
 root_agent = LlmAgent(
     model=LiteLlm(model=f"{provider}/{model}", llm_provider=provider), # LiteLLM model string format

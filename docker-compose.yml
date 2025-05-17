@@ -1,0 +1,23 @@
+services:
+  service-api:
+    build:
+      context: .
+      dockerfile: service.Dockerfile
+    command: uvicorn main:app --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+  agent-api:
+    build:
+      context: .
+      dockerfile: agents.Dockerfile
+    command: adk web
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
