@@ -1,0 +1,34 @@
+name: Build Docker image on push
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and tag Docker image with branch name
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/adk-starter:${BRANCH} .
+
+      - name: Push Docker image
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/adk-starter:${BRANCH}
